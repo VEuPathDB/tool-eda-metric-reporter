@@ -9,7 +9,7 @@ properties([
   ])
 ])
 
-node('watermelon') {
+node {
   checkout scm
 
   sh 'python3 -m venv pyenv'
