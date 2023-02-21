@@ -12,7 +12,7 @@ properties([
 node {
   checkout scm
 
-  sh 'python3 -m venv pyenv'
+  sh 'python -m venv pyenv'
   Python("-m pip install distutils")
   Python("-m pip install .")
   Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL}")
