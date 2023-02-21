@@ -9,10 +9,14 @@ properties([
   ])
 ])
 
+tools {
+   python3 'python3'
+}
+
 node {
   checkout scm
 
-  sh 'python -m venv pyenv'
+  sh 'python3 -m venv pyenv'
   Python("-m pip install distutils")
   Python("-m pip install .")
   Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL}")
@@ -21,5 +25,5 @@ node {
 // Jenkins spawns a new shell each time "sh" is called. Using this command ensures we use the virtual environment each time we
 // execute a python command.
 def Python(String command) {
-    sh script:"source ${WORKSPACE}/pyenv/bin/activate && python ${command}", label: "python ${command}"
+    sh script:"source ${WORKSPACE}/pyenv/bin/activate && python3 ${command}", label: "python3 ${command}"
 }
