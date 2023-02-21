@@ -21,5 +21,5 @@ node {
 // Jenkins spawns a new shell each time "sh" is called. Using this command ensures we use the virtual environment each time we
 // execute a python command.
 def Python(String command) {
-    sh script:"source ${WORKSPACE}/pyenv/bin/activate && python3 ${command}", label: "python3 ${command}"
+    sh script:"source ${WORKSPACE}/pyenv/bin/activate && python ${command}", label: "python ${command}"
 }
