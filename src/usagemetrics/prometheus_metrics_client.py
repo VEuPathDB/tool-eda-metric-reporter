@@ -10,7 +10,9 @@ class PrometheusClient:
         self.base_url = base_url
 
     def get_metrics(self, query, start_date, end_date, labels):
-        url = f'/api/v1/query_range?query={query}&start={start_date.isoformat() + "Z"}&end={end_date.isoformat() + "Z"}&step=1d'
+        print("Executing query: " + query)
+        interval = (end_date - start_date).days
+        url = f'/api/v1/query_range?query={query}&start={start_date.isoformat() + "Z"}&end={end_date.isoformat() + "Z"}&step={str(interval)}d'
         prom_client = client.HTTPConnection(self.base_url)
         prom_client.request(method="GET", url=url)
         response = prom_client.getresponse()
