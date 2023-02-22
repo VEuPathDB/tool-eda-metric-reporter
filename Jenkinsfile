@@ -6,7 +6,7 @@ properties([
     stringParam(name: 'ENV', defaultValue: 'dev', description: 'Environment to target when scraping report data'),
     stringParam(name: 'EDA_URL', defaultValue: 'clinepidb.org', description: 'EDA site to use for user metrics service URL'),
     stringParam(name: 'PROM_URL', defaultValue: 'sloe.uga.apidb.org:9090', description: 'URL to use for prometheus metrics'),
-    stringParam(name: 'CALENDAR_MONTH', defaultValue: 'auto', description: 'Calendar month to use when querying metrics in yyyy-MM'
+    stringParam(name: 'CALENDAR_MONTH', defaultValue: 'auto', description: 'Calendar month to use when querying metrics in yyyy-MM')
   ])
 ])
 
