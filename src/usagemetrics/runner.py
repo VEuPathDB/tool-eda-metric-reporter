@@ -12,9 +12,8 @@ AUTO_PICK_CALENDAR_MONTH = "auto"
 class UsageMetricsRunner:
     PROJECT_ID = "ClinEpiDB"
 
-    def __init__(self, user_metrics_url, auth_key, prometheus_url, env, calendar_month):
+    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month):
         self.user_metrics_url = user_metrics_url
-        self.auth_key = auth_key
         self.prometheus_url = prometheus_url
         self.env = env
         self.metrics_writer = MetricsWriter(None, None, None)
@@ -58,7 +57,7 @@ class UsageMetricsRunner:
         self.metrics_writer.write_download_histogram(subsetting_download_metrics, "subsetting_downloads.csv", self.start.isoformat())
 
     def handle_analysis_metrics(self):
-        user_metrics_client = UserMetricsClient(self.user_metrics_url, self.auth_key, self.PROJECT_ID)
+        user_metrics_client = UserMetricsClient(self.user_metrics_url, self.PROJECT_ID)
 
         # (analysis_count_bucket, registered_user_count, guest_user_count, registered_user_filters, guest_user_filters)
         analysis_metrics = user_metrics_client.query_analysis_metrics(self.start, self.end)
