@@ -14,7 +14,6 @@ node("watermelon") {
   checkout scm
 
   sh 'python3 -m venv pyenv'         // Create a virtual environment in the Jenkins workspace.
-  Python("-m pip install distutils") // Install distutils, so we can install our module.
   Python("-m pip install .")         // Install our usage metrics module.
   Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL} ${params.CALENDAR_MONTH}")
 }
