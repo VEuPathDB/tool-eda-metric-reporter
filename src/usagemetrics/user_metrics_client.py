@@ -8,9 +8,8 @@ import pandas as pd
 
 class UserMetricsClient:
 
-    def __init__(self, url, auth_key, project_id):
+    def __init__(self, url, project_id):
         self.url = url
-        self.auth_key = auth_key
         self.project_id = project_id
 
     # Queries the user service and returns a dataframe with a column index on object type and a row index on metric
@@ -37,12 +36,11 @@ class UserMetricsClient:
     # >64                                     2.0                              0.0...
     def query_analysis_metrics(self, start_date, end_date):
         eda_client = client.HTTPConnection(self.url)
-        headers = {"Auth-Key": self.auth_key}
         # Add this header if using an internal dev or qa site. "Cookie": "auth_tkt=xxx"
         eda_client.request(method="GET",
                            url=f"/eda/metrics/user/{self.project_id}/analyses?startDate={start_date.isoformat().split('T')[0]}&endDate={end_date.isoformat().split('T')[0]}",
                            body=None,
-                           headers=headers)
+                           headers={})
         response = eda_client.getresponse()
         print("Received response with status " + str(response.status))
         if response.status != 200:
