@@ -37,7 +37,7 @@ class UserMetricsClient:
     # >64                                     2.0                              0.0...
     def query_analysis_metrics(self, start_date, end_date):
         eda_client = client.HTTPConnection(self.url)
-        headers = {"Auth-Key": self.auth_key, "Cookie": "auth_tkt=OTM1Yjg3MmZhNDRhMWMzMmIwYzIzYTM1MGU0OWU3MWM2M2Y2Mzk5M2FwaWRiIWFwaWRiITE2NzcwODA5Nzk6"}
+        headers = {"Auth-Key": self.auth_key}
         # Add this header if using an internal dev or qa site. "Cookie": "auth_tkt=xxx"
         eda_client.request(method="GET",
                            url=f"/eda/metrics/user/{self.project_id}/analyses?startDate={start_date.isoformat().split('T')[0]}&endDate={end_date.isoformat().split('T')[0]}",

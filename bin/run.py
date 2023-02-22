@@ -8,7 +8,7 @@ def __main__():
     auth_key = os.environ.get('AUTH_KEY')
 
     if len(sys.argv) != 4:
-        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL>")
+        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM>")
 
     env = sys.argv[1]
     eda_url = sys.argv[2]
