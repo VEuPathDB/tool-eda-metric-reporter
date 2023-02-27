@@ -14,7 +14,7 @@ class PrometheusClient:
         interval = (end_date - start_date).days
         url = f'/api/v1/query_range?query={query}&start={start_date.isoformat() + "Z"}&end={end_date.isoformat() + "Z"}&step={str(interval)}d'
         prom_client = client.HTTPConnection(self.base_url)
-        prom_client.request(method="GET", url=url)
+        prom_client.request(method="GET", url=url, headers={"Cookie": "auth_tkt=OWMyNWM0NGQ2NGEzMWJlY2IyOTM3YzA4OWVkODg2MmY2M2ZjZGFhZWFwaWRiIWFwaWRiITE2Nzc1MTU0Mzg6"})
         response = prom_client.getresponse()
         if response.status != 200:
             raise RuntimeError("Prometheus service did not return a successful response. " + str(response.read()))
@@ -24,10 +24,10 @@ class PrometheusClient:
     # Takes a response from the prometheus client and returns a dataframe with a column multi index on the provided
     # labels and a row index of data point times.
     # E.G:
-    #            AVENIR-1 JILCOST-1
-    #           354383910 354383910
-    # 2023-02-17       0.0  2.019454
-    # 2023-02-18       0.0  0.000000
+    #           AVENIR-1                JILCOST-1
+    #           354383910   354383910   454383915
+    # 2023-02-17       0.0  2.019454       1.0
+    # 2023-02-18       0.0  0.000000       1.0
     @staticmethod
     def parse_to_dataframe(response, labels):
         parsed_response = json.loads(response.read())
