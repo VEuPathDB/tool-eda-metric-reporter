@@ -25,7 +25,7 @@ class EdaUserServiceMetricsClient:
         """
         eda_url_parse_result = urlparse(self.url)
         if eda_url_parse_result.scheme == 'https':
-            eda_client = client.HTTPSConnection(str(eda_url_parse_result.hostname))
+            eda_client = client.HTTPSConnection(str(eda_url_parse_result.hostname), port=eda_url_parse_result.port)
         else:
             eda_client = client.HTTPConnection(str(eda_url_parse_result.hostname))
         # Add this header if using an internal dev or qa site. "Cookie": "auth_tkt=xxx"
