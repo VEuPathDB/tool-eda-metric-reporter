@@ -14,7 +14,7 @@ class PrometheusClient:
         interval = (end_date - start_date).days
         url = f'/api/v1/query_range?query={query}&start={start_date.isoformat() + "Z"}&end={end_date.isoformat() + "Z"}&step={str(interval)}d'
         prom_client = client.HTTPConnection(self.base_url)
-        prom_client.request(method="GET", url=url, headers={"Cookie": "auth_tkt=OWMyNWM0NGQ2NGEzMWJlY2IyOTM3YzA4OWVkODg2MmY2M2ZjZGFhZWFwaWRiIWFwaWRiITE2Nzc1MTU0Mzg6"})
+        prom_client.request(method="GET", url=url)
         response = prom_client.getresponse()
         if response.status != 200:
             raise RuntimeError("Prometheus service did not return a successful response. " + str(response.read()))
