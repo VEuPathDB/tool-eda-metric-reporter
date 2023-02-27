@@ -14,8 +14,8 @@ properties([
 node(params.NODE) {
   checkout scm
 
-  sh 'python3 -m venv pyenv'         // Create a virtual environment in the Jenkins workspace.
-  Python("-m pip install .")         // Install our usage metrics module.
+  sh 'python3 -m venv pyenv'                   // Create a virtual environment in the Jenkins workspace.
+  Python("-m pip install --upgrade .")         // Install our usage metrics module.
   Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL} ${params.CALENDAR_MONTH}")
 }
 
