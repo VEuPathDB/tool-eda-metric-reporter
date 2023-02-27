@@ -24,7 +24,10 @@ class EdaUserServiceMetricsClient:
         :return:
         """
         eda_url_parse_result = urlparse(self.url)
-        eda_client = client.HTTPConnection(str(eda_url_parse_result.hostname))
+        if eda_url_parse_result.scheme == 'https':
+            eda_client = client.HTTPSConnection(str(eda_url_parse_result.hostname))
+        else:
+            eda_client = client.HTTPConnection(str(eda_url_parse_result.hostname))
         # Add this header if using an internal dev or qa site. "Cookie": "auth_tkt=xxx"
         print(f"URL: {str(eda_url_parse_result.path)}/metrics/user/{self.project_id}/analyses?startDate={start_date.isoformat().split('T')[0]}&endDate={end_date.isoformat().split('T')[0]}")
         eda_client.request(method="GET",
