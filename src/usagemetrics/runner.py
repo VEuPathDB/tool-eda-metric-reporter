@@ -42,17 +42,19 @@ class UsageMetricsRunner:
 
     def handle_download_metrics(self):
         interval = (self.end - self.start).days
-        download_metrics = self.prometheus_client.get_metrics(
+        file_download_metrics = self.prometheus_client.get_metrics(
             'increase(dataset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
 
         # Filter out zeroes before counting users per study
-        download_metrics = download_metrics[download_metrics != 0.0]
+        file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
 
         # group dataframe by study and count non-zero users
-        download_metrics = download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
+        file_download_metrics = file_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
+        file_download_metrics = file_download_metrics.transpose().reindex().rename(columns=str)
+        file_download_metrics.columns.values[0] = "file_downloads"
 
         subsetting_download_metrics = self.prometheus_client.get_metrics(
             'increase(subset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
@@ -61,10 +63,15 @@ class UsageMetricsRunner:
             labels=['user_id', 'study_name'])
 
         subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
+        subsetting_download_metrics = subsetting_download_metrics.transpose().reindex().rename(columns=str)
+        subsetting_download_metrics.columns.values[0] = "subset_downloads"
 
-        self.metrics_writer.write_download_histogram(download_metrics, "ds_downloads.csv", self.start.isoformat())
-        self.metrics_writer.write_download_histogram(subsetting_download_metrics, "subsetting_downloads.csv",
-                                                     self.start.isoformat())
+        all_download_metrics = file_download_metrics.merge(right=subsetting_download_metrics,
+                                                           left_index=True,
+                                                           right_index=True,
+                                                           how="outer")
+
+        self.metrics_writer.write_downloads_by_study(all_download_metrics, self.start.isoformat())
 
     def handle_analysis_metrics(self):
         user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.PROJECT_ID)
@@ -79,12 +86,16 @@ class UsageMetricsRunner:
                                                          labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64", ">64"])
 
         # group by new objects count bucket field to produce a histogram and write as output
-        users_in_buckets = per_study_stats_histo.groupby("objects_bucket").sum()
-        self.metrics_writer.write_analysis_histogram(users_in_buckets, self.start.isoformat())
+        bucketed_analysis_histogram = per_study_stats_histo.groupby("objects_bucket").sum()
+
+        # Delete objects count from final output. We have the bucket now
+        bucketed_analysis_histogram = bucketed_analysis_histogram.drop(columns="objects_count")
+
         self.metrics_writer.write_raw_analysis(analysis_metrics.raw_output, self.start.isoformat())
-        self.metrics_writer.write_per_study_metrics(analysis_metrics.study_stats, self.start.isoformat())
-        self.metrics_writer.write_registered_totals_stats(analysis_metrics.registered_totals_stats, self.start.isoformat())
-        self.metrics_writer.write_guest_totals_stats(analysis_metrics.guest_totals_stats, self.start.isoformat())
+        self.metrics_writer.write_analysis_histogram(bucketed_analysis_histogram, self.start.isoformat())
+        self.metrics_writer.write_analysis_metrics_by_study(analysis_metrics.study_stats, self.start.isoformat())
+        self.metrics_writer.write_aggregate_stats(analysis_metrics.registered_totals_stats, self.start.isoformat(), "registered")
+        self.metrics_writer.write_aggregate_stats(analysis_metrics.guest_totals_stats, self.start.isoformat(), "guest")
 
 
 def last_day_of_month(any_day):

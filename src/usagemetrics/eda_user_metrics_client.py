@@ -71,7 +71,7 @@ class EdaUserServiceMetricsClient:
 
         guest_filters_histo = pd.DataFrame(
             parsed_body['createdOrModifiedCounts']['guestUsersFiltersCounts']).rename(
-            columns={"objectsCount": "objects_count", "usersCount": "guests_users_with_filter_count"})
+            columns={"objectsCount": "objects_count", "usersCount": "guest_users_with_filter_count"})
 
         registered_users_filters_histo = pd.DataFrame(
             parsed_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
