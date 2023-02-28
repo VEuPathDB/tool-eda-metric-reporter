@@ -24,10 +24,10 @@ class PrometheusClient:
     # Takes a response from the prometheus client and returns a dataframe with a column multi index on the provided
     # labels and a row index of data point times.
     # E.G:
-    #            AVENIR-1 JILCOST-1
-    #           354383910 354383910
-    # 2023-02-17       0.0  2.019454
-    # 2023-02-18       0.0  0.000000
+    #           AVENIR-1                JILCOST-1
+    #           354383910   354383910   454383915
+    # 2023-02-17       0.0  2.019454       1.0
+    # 2023-02-18       0.0  0.000000       1.0
     @staticmethod
     def parse_to_dataframe(response, labels):
         parsed_response = json.loads(response.read())

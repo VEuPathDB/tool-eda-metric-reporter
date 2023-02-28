@@ -2,8 +2,9 @@ import sys
 import pandas as pd
 from datetime import datetime, timedelta
 
+from usagemetrics.analysis_metrics import AnalysisMetrics
 from usagemetrics.metrics_writer import MetricsWriter
-from usagemetrics.user_metrics_client import UserMetricsClient
+from usagemetrics.eda_user_metrics_client import EdaUserServiceMetricsClient
 from usagemetrics.prometheus_metrics_client import PrometheusClient
 
 AUTO_PICK_CALENDAR_MONTH = "auto"
@@ -13,6 +14,14 @@ class UsageMetricsRunner:
     PROJECT_ID = "ClinEpiDB"
 
     def __init__(self, user_metrics_url, prometheus_url, env, calendar_month):
+        """
+
+        :param user_metrics_url: URL of EDA user metrics service, e.g. http://dgaldi.clinepidb.org/eda
+        :param prometheus_url: URL of prometheus endpoint, e.g. localhost:9090
+        :param env: Environment label to use when filtering prometheus data, e.g. dev, qa or prod
+        :param calendar_month: Month in the form yyyy-MM
+        """
+
         self.user_metrics_url = user_metrics_url
         self.prometheus_url = prometheus_url
         self.env = env
@@ -54,22 +63,28 @@ class UsageMetricsRunner:
         subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
 
         self.metrics_writer.write_download_histogram(download_metrics, "ds_downloads.csv", self.start.isoformat())
-        self.metrics_writer.write_download_histogram(subsetting_download_metrics, "subsetting_downloads.csv", self.start.isoformat())
+        self.metrics_writer.write_download_histogram(subsetting_download_metrics, "subsetting_downloads.csv",
+                                                     self.start.isoformat())
 
     def handle_analysis_metrics(self):
-        user_metrics_client = UserMetricsClient(self.user_metrics_url, self.PROJECT_ID)
+        user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.PROJECT_ID)
 
         # (analysis_count_bucket, registered_user_count, guest_user_count, registered_user_filters, guest_user_filters)
-        analysis_metrics = user_metrics_client.query_analysis_metrics(self.start, self.end)
+        analysis_metrics: AnalysisMetrics = user_metrics_client.query_analysis_metrics(self.start, self.end)
 
         # quantize objects count into buckets to be stored as report output
-        analysis_metrics['objects_bucket'] = pd.cut(analysis_metrics['objects_count'],
-                                                    bins=[-1, 0, 1, 2, 4, 8, 16, 32, 64, sys.maxsize],
-                                                    labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64", ">64"])
+        per_study_stats_histo = analysis_metrics.user_stats_histogram
+        per_study_stats_histo['objects_bucket'] = pd.cut(per_study_stats_histo['objects_count'],
+                                                         bins=[-1, 0, 1, 2, 4, 8, 16, 32, 64, sys.maxsize],
+                                                         labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64", ">64"])
 
         # group by new objects count bucket field to produce a histogram and write as output
-        users_in_buckets = analysis_metrics.groupby("objects_bucket").sum()
+        users_in_buckets = per_study_stats_histo.groupby("objects_bucket").sum()
         self.metrics_writer.write_analysis_histogram(users_in_buckets, self.start.isoformat())
+        self.metrics_writer.write_raw_analysis(analysis_metrics.raw_output, self.start.isoformat())
+        self.metrics_writer.write_per_study_metrics(analysis_metrics.study_stats, self.start.isoformat())
+        self.metrics_writer.write_registered_totals_stats(analysis_metrics.registered_totals_stats, self.start.isoformat())
+        self.metrics_writer.write_guest_totals_stats(analysis_metrics.guest_totals_stats, self.start.isoformat())
 
 
 def last_day_of_month(any_day):
@@ -81,4 +96,3 @@ def last_day_of_month(any_day):
 
 def first_day_of_month(any_day):
     return any_day.replace(day=1, hour=0, minute=0)
-
