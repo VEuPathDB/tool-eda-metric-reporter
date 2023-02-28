@@ -6,12 +6,12 @@ SCHEMA_NAME = "usagemetrics"
 class MetricsWriter:
 
     def __init__(self, db, username, password):
-        # self.connection = cx_Oracle.connect(
-        #     username,
-        #     password,
-        #     db,
-        #     encoding='utf-8',
-        #     dry_run=True)
+        self.connection = cx_Oracle.connect(
+            username,
+            password,
+            db,
+            encoding='utf-8',
+            dry_run=True)
         print("Not yet implemented")
 
     def write_analysis_histogram(self, df, id):
@@ -20,12 +20,12 @@ class MetricsWriter:
         print("Not yet implemented")
 
     def write_download_histogram(self, df, file_name, id):
-        # sql = f'INSERT INTO {SCHEMA_NAME}.analysis_histogram VALUES(:1,:2,:3,:4,:5,:6)'
-        # df_list = df.values.tolist()
-        # n = 0
-        # for i in df.iterrows():
-        #     self.connection.execute(sql, df_list[n])
-        #     n += 1
+        sql = f'INSERT INTO {SCHEMA_NAME}.analysis_histogram (run_id, ) VALUES(:1,:2,:3,:4,:5)'
+        df_list = df.values.tolist()
+        n = 0
+        for i in df.iterrows():
+            self.connection.execute(sql, df_list[n])
+            n += 1
 
         print(f"Download histogram for run ID: {id} and file name: {file_name}.")
         print(df.to_string())

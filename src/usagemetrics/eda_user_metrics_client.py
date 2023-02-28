@@ -2,7 +2,6 @@ import json
 import sys
 from http import client
 from urllib.parse import urlparse
-import pandas
 import pandas as pd
 from usagemetrics.analysis_metrics import AnalysisMetrics
 
@@ -29,11 +28,10 @@ class EdaUserServiceMetricsClient:
         else:
             eda_client = client.HTTPConnection(str(eda_url_parse_result.hostname))
         # Add this header if using an internal dev or qa site. "Cookie": "auth_tkt=xxx"
-        print(f"Hostname {eda_url_parse_result.hostname} Path: {str(eda_url_parse_result.path)}/metrics/user/{self.project_id}/analyses?startDate={start_date.isoformat().split('T')[0]}&endDate={end_date.isoformat().split('T')[0]}")
-        eda_client.request(method="GET",
-                           url=f"{str(eda_url_parse_result.path)}/metrics/user/{self.project_id}/analyses?startDate={start_date.isoformat().split('T')[0]}&endDate={end_date.isoformat().split('T')[0]}",
-                           body=None,
-                           headers={})
+        query_start = start_date.isoformat().split('T')[0]
+        query_end = end_date.isoformat().split('T')[0]
+        url = f"{str(eda_url_parse_result.path)}/metrics/user/{self.project_id}/analyses?startDate={query_start}&endDate={query_end}"
+        eda_client.request(method="GET", url=url, body=None, headers={})
         response = eda_client.getresponse()
         print("Received response with status " + str(response.status))
         if response.status != 200:
@@ -42,9 +40,9 @@ class EdaUserServiceMetricsClient:
         parsed_body = json.loads(response.read())
 
         created_or_modified_counts = parsed_body['createdOrModifiedCounts']
-        analyses_per_study = pandas.DataFrame(created_or_modified_counts["analysesPerStudy"]).rename(
+        analyses_per_study = pd.DataFrame(created_or_modified_counts["analysesPerStudy"]).rename(
             columns={"studyId": "study_id", "count": "analysis_count"})
-        shares_per_study = pandas.DataFrame(created_or_modified_counts["importedAnalysesPerStudy"]).rename(
+        shares_per_study = pd.DataFrame(created_or_modified_counts["importedAnalysesPerStudy"]).rename(
             columns={"studyId": "study_id", "count": "shares_count"})
         study_stats = analyses_per_study.merge(right=shares_per_study, on="study_id", how="outer")
 
@@ -63,19 +61,19 @@ class EdaUserServiceMetricsClient:
         }
 
         # Parse different parts of service response into dataframes
-        registered_users_histo = pandas.DataFrame(
+        registered_users_histo = pd.DataFrame(
             parsed_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "registered_users_with_analysis_count"})
 
-        guest_users_histo = pandas.DataFrame(
+        guest_users_histo = pd.DataFrame(
             parsed_body['createdOrModifiedCounts']['guestUsersAnalysesCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "guest_users_with_analysis_count"})
 
-        guest_filters_histo = pandas.DataFrame(
+        guest_filters_histo = pd.DataFrame(
             parsed_body['createdOrModifiedCounts']['guestUsersFiltersCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "guests_users_with_filter_count"})
 
-        registered_users_filters_histo = pandas.DataFrame(
+        registered_users_filters_histo = pd.DataFrame(
             parsed_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "registered_users_with_filter_count"})
 
