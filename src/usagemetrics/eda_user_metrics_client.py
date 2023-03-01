@@ -36,48 +36,55 @@ class EdaUserServiceMetricsClient:
         print("Received response with status " + str(response.status))
         if response.status != 200:
             raise RuntimeError("User service did not return a successful response. " + str(response.read()))
-
         parsed_body = json.loads(response.read())
-
+        # Extract dataframe metrics from output.
+        output_df, study_stats = self.extract_dfs(parsed_body)
+        # Extract simple dictionaries from output.
         created_or_modified_counts = parsed_body['createdOrModifiedCounts']
-        analyses_per_study = pd.DataFrame(created_or_modified_counts["analysesPerStudy"]).rename(
-            columns={"studyId": "study_id", "count": "analysis_count"})
-        shares_per_study = pd.DataFrame(created_or_modified_counts["importedAnalysesPerStudy"]).rename(
-            columns={"studyId": "study_id", "count": "shares_count"})
-        study_stats = analyses_per_study.merge(right=shares_per_study, on="study_id", how="outer")
-
         registered_totals_stats = {
             'numUsers': created_or_modified_counts['registeredUsersCount'],
             'numAnalyses': created_or_modified_counts['registeredAnalysesCount'],
             'numFilters': created_or_modified_counts['registeredFiltersCount'],
             'numVisualizations': created_or_modified_counts['registeredVisualizationsCount']
         }
-
         guest_totals_stats = {
             'numUsers': created_or_modified_counts['guestUsersCount'],
             'numAnalyses': created_or_modified_counts['guestAnalysesCount'],
             'numFilters': created_or_modified_counts['guestFiltersCount'],
             'numVisualizations': created_or_modified_counts['guestVisualizationsCount']
         }
+        return AnalysisMetrics(raw_output=parsed_body,
+                               user_stats_histogram=output_df,
+                               study_stats=study_stats,
+                               registered_totals_stats=registered_totals_stats,
+                               guest_totals_stats=guest_totals_stats)
+
+    def extract_dfs(self, response_body):
+        created_or_modified_counts = response_body['createdOrModifiedCounts']
+        analyses_per_study = pd.DataFrame(created_or_modified_counts["analysesPerStudy"]).rename(
+            columns={"studyId": "study_id", "count": "analysis_count"})
+        shares_per_study = pd.DataFrame(created_or_modified_counts["importedAnalysesPerStudy"]).rename(
+            columns={"studyId": "study_id", "count": "shares_count"})
+
+        study_stats = analyses_per_study.merge(right=shares_per_study, on="study_id", how="outer")
 
         # Parse different parts of service response into dataframes
         registered_users_histo = pd.DataFrame(
-            parsed_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
+            response_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "registered_users_with_analysis_count"})
 
         guest_users_histo = pd.DataFrame(
-            parsed_body['createdOrModifiedCounts']['guestUsersAnalysesCounts']).rename(
+            response_body['createdOrModifiedCounts']['guestUsersAnalysesCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "guest_users_with_analysis_count"})
 
         guest_filters_histo = pd.DataFrame(
-            parsed_body['createdOrModifiedCounts']['guestUsersFiltersCounts']).rename(
+            response_body['createdOrModifiedCounts']['guestUsersFiltersCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "guest_users_with_filter_count"})
 
         registered_users_filters_histo = pd.DataFrame(
-            parsed_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
+            response_body['createdOrModifiedCounts']['registeredUsersAnalysesCounts']).rename(
             columns={"objectsCount": "objects_count", "usersCount": "registered_users_with_filter_count"})
 
-        # Merge dataframes on objects_count, to create a "histogram table" with all object types.
         output_df = registered_users_histo.merge(right=guest_users_histo, how="outer", on="objects_count")
         output_df = output_df.merge(right=guest_filters_histo, how="outer", on="objects_count")
         output_df = output_df.merge(right=registered_users_filters_histo, how="outer", on="objects_count")
@@ -86,9 +93,4 @@ class EdaUserServiceMetricsClient:
         output_df['objects_bucket'] = pd.cut(output_df['objects_count'],
                                              bins=[-1, 0, 1, 2, 4, 8, 16, 32, 64, sys.maxsize],
                                              labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64", ">64"])
-
-        return AnalysisMetrics(raw_output=parsed_body,
-                               user_stats_histogram=output_df,
-                               study_stats=study_stats,
-                               registered_totals_stats=registered_totals_stats,
-                               guest_totals_stats=guest_totals_stats)
+        return (output_df, study_stats)

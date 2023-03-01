@@ -1,4 +1,6 @@
 import sys
+import uuid
+
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -13,7 +15,7 @@ AUTO_PICK_CALENDAR_MONTH = "auto"
 class UsageMetricsRunner:
     PROJECT_ID = "ClinEpiDB"
 
-    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month):
+    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer):
         """
 
         :param user_metrics_url: URL of EDA user metrics service, e.g. http://dgaldi.clinepidb.org/eda
@@ -25,7 +27,7 @@ class UsageMetricsRunner:
         self.user_metrics_url = user_metrics_url
         self.prometheus_url = prometheus_url
         self.env = env
-        self.metrics_writer = MetricsWriter(None, None, None)
+        self.metrics_writer = metrics_writer
         self.prometheus_client = PrometheusClient(self.prometheus_url)
         if calendar_month == AUTO_PICK_CALENDAR_MONTH:
             current_date = datetime.today()
@@ -37,10 +39,12 @@ class UsageMetricsRunner:
             self.end = last_day_of_month(self.start)
 
     def run(self):
-        self.handle_analysis_metrics()
-        self.handle_download_metrics()
+        run_id = str(uuid.uuid4())
+        self.metrics_writer.create_job(run_id, self.start)
+        self.handle_analysis_metrics(run_id)
+        self.handle_download_metrics(run_id)
 
-    def handle_download_metrics(self):
+    def handle_download_metrics(self, run_id):
         interval = (self.end - self.start).days
         file_download_metrics = self.prometheus_client.get_metrics(
             'increase(dataset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
@@ -71,9 +75,9 @@ class UsageMetricsRunner:
                                                            right_index=True,
                                                            how="outer")
 
-        self.metrics_writer.write_downloads_by_study(all_download_metrics, self.start.isoformat())
+        self.metrics_writer.write_downloads_by_study(all_download_metrics, run_id)
 
-    def handle_analysis_metrics(self):
+    def handle_analysis_metrics(self, run_id):
         user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.PROJECT_ID)
 
         # (analysis_count_bucket, registered_user_count, guest_user_count, registered_user_filters, guest_user_filters)
@@ -91,11 +95,11 @@ class UsageMetricsRunner:
         # Delete objects count from final output. We have the bucket now
         bucketed_analysis_histogram = bucketed_analysis_histogram.drop(columns="objects_count")
 
-        self.metrics_writer.write_raw_analysis(analysis_metrics.raw_output, self.start.isoformat())
-        self.metrics_writer.write_analysis_histogram(bucketed_analysis_histogram, self.start.isoformat())
-        self.metrics_writer.write_analysis_metrics_by_study(analysis_metrics.study_stats, self.start.isoformat())
-        self.metrics_writer.write_aggregate_stats(analysis_metrics.registered_totals_stats, self.start.isoformat(), "registered")
-        self.metrics_writer.write_aggregate_stats(analysis_metrics.guest_totals_stats, self.start.isoformat(), "guest")
+        self.metrics_writer.write_raw_analysis(analysis_metrics.raw_output, run_id)
+        self.metrics_writer.write_analysis_histogram(bucketed_analysis_histogram, run_id)
+        self.metrics_writer.write_analysis_metrics_by_study(analysis_metrics.study_stats, run_id)
+        self.metrics_writer.write_aggregate_stats(analysis_metrics.registered_totals_stats, run_id, "registered")
+        self.metrics_writer.write_aggregate_stats(analysis_metrics.guest_totals_stats, run_id, "guest")
 
 
 def last_day_of_month(any_day):
