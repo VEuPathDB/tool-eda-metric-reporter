@@ -8,5 +8,5 @@ setup(name='usagemetrics',
       package_dir={"": "src"},
       packages=["usagemetrics"],
       description='Usage Metrics functionality',
-      install_requires=['pandas', 'cx_Oracle', 'dataclasses'],
+      install_requires=['pandas', 'cx_Oracle', 'dataclasses', 'python-ldap'],
       author='VEuPathDB')
