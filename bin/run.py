@@ -17,10 +17,11 @@ def __main__():
 
     db_user = os.getenv("DB_USER")
     db_pass = os.getenv("DB_PASS")
+    acctdb = os.getenv("ACCTDB")
     ldap_host = os.getenv("LDAP_HOST")
     ldap_query = os.getenv("LDAP_QUERY")
 
-    metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass)
+    metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass, acctdb)
     runner.UsageMetricsRunner(user_metrics_url=eda_url,
                               prometheus_url=prometheus_url,
                               env=env,

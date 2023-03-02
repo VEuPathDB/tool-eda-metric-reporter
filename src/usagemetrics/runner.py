@@ -5,7 +5,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from usagemetrics.analysis_metrics import AnalysisMetrics
-from usagemetrics.metrics_writer import MetricsWriter
 from usagemetrics.eda_user_metrics_client import EdaUserServiceMetricsClient
 from usagemetrics.prometheus_metrics_client import PrometheusClient
 
@@ -17,7 +16,6 @@ class UsageMetricsRunner:
 
     def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer):
         """
-
         :param user_metrics_url: URL of EDA user metrics service, e.g. http://dgaldi.clinepidb.org/eda
         :param prometheus_url: URL of prometheus endpoint, e.g. localhost:9090
         :param env: Environment label to use when filtering prometheus data, e.g. dev, qa or prod
@@ -40,7 +38,7 @@ class UsageMetricsRunner:
 
     def run(self):
         run_id = str(uuid.uuid4())
-        self.metrics_writer.create_job(run_id, self.start)
+        self.metrics_writer.create_job(run_id, self.start.month, self.start.year)
         self.handle_analysis_metrics(run_id)
         self.handle_download_metrics(run_id)
 
