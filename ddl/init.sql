@@ -17,7 +17,6 @@ CREATE TABLE usagemetrics.analysishistogram (
     guests_filters                  NUMBER NOT NULL,
     registered_users_visualizations NUMBER NOT NULL,
     guest_users_visualizations      NUMBER NOT NULL,
-    -- Add visualizations columns
     PRIMARY KEY(report_id, count_bucket),
     FOREIGN KEY (report_id)
         REFERENCES usagemetrics.reports(report_id)

@@ -32,7 +32,7 @@ class EdaUserServiceMetricsClient:
         query_start = start_date.isoformat().split('T')[0]
         query_end = end_date.isoformat().split('T')[0]
         url = f"{str(eda_url_parse_result.path)}{self.base_url}?startDate={query_start}&endDate={query_end}"
-        eda_client.request(method="GET", url=url, body=None, headers={"Cookie": "auth_tkt=YzMyOGFmOTg0OTkxZjYxZWNlYmEyZjRjZTI2YmU1YWQ2NDAwZTllZWFwaWRiIWFwaWRiITE2Nzc3ODE0ODY6"})
+        eda_client.request(method="GET", url=url, body=None, headers={})
         response = eda_client.getresponse()
         print("Received response with status " + str(response.status))
         if response.status != 200:
