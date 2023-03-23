@@ -8,7 +8,10 @@ properties([
     stringParam(name: 'PROM_URL', defaultValue: 'sloe.uga.apidb.org:9090', description: 'URL to use for prometheus metrics'),
     stringParam(name: 'CALENDAR_MONTH', defaultValue: 'auto', description: 'Calendar month to use when querying metrics in yyyy-MM'),
     stringParam(name: 'NODE', defaultValue: 'palm', description: 'Node to run on'),
-    stringParam(name: 'DB_LDAP_CN', defaultValue: 'cecommdevn', description: 'Target database')
+    stringParam(name: 'DB_LDAP_CN', defaultValue: 'cecommdevn', description: 'Target database'),
+    stringParam(name: 'LDAP_HOST', defaultValue: '', description: 'LDAP host'),
+    stringParam(name: 'LDAP_QUERY', defaultValue: '', description: 'LDAP query'),
+    stringParam(name: 'DB_USER', defaultValue: '', description: 'DB user')
   ])
 ])
 
@@ -17,7 +20,7 @@ node(params.NODE) {
 
   sh 'python3 -m venv pyenv'                   // Create a virtual environment in the Jenkins workspace.
   Python("-m pip install --upgrade .")         // Install our usage metrics module.
-  Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL} ${params.CALENDAR_MONTH} ${params.DB_LDAP_CN}")
+  Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL} ${params.CALENDAR_MONTH} ${params.DB_LDAP_CN} ${params.LDAP_HOST} ${params.LDAP_QUERY} ${params.DB_USER}")
 }
 
 // Jenkins spawns a new shell each time "sh" is called. Using this command ensures we use the virtual environment each time we
