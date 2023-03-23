@@ -16,7 +16,7 @@ class CredentialsProvider:
         if password is None:
             print(f"Looking for username {self.username} in file {self.secrets_file}")
             element_tree = et.parse(self.secrets_file)
-            db_element = element_tree.find(f"database/{db}[@login=\"{self.username}\"]")
+            db_element = element_tree.find(f"database/user[@login=\"{self.username}\"]")
             password = db_element.get("password")
         if password is None:
             raise EnvironmentError("Unable to parse secret from credentials file.")
