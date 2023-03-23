@@ -11,7 +11,8 @@ properties([
     stringParam(name: 'DB_LDAP_CN', defaultValue: 'cecommdevn', description: 'Target database'),
     stringParam(name: 'LDAP_HOST', defaultValue: '', description: 'LDAP host'),
     stringParam(name: 'LDAP_QUERY', defaultValue: '', description: 'LDAP query'),
-    stringParam(name: 'DB_USER', defaultValue: '', description: 'DB user')
+    stringParam(name: 'DB_USER', defaultValue: '', description: 'DB user'),
+    stringParam(name: 'SECRETS_FILE', defaultValue: '', description: 'Secrets file')
   ])
 ])
 
@@ -20,7 +21,7 @@ node(params.NODE) {
 
   sh 'python3 -m venv pyenv'                   // Create a virtual environment in the Jenkins workspace.
   Python("-m pip install --upgrade .")         // Install our usage metrics module.
-  Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL} ${params.CALENDAR_MONTH} ${params.DB_LDAP_CN} ${params.LDAP_HOST} ${params.LDAP_QUERY} ${params.DB_USER}")
+  Python("bin/run.py ${params.ENV} ${params.EDA_URL} ${params.PROM_URL} ${params.CALENDAR_MONTH} ${params.DB_LDAP_CN} ${params.LDAP_HOST} ${params.LDAP_QUERY} ${params.DB_USER} ${params.SECRETS_FILE}")
 }
 
 // Jenkins spawns a new shell each time "sh" is called. Using this command ensures we use the virtual environment each time we

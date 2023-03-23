@@ -8,7 +8,7 @@ import usagemetrics.creds_provider as creds
 
 def __main__():
     if len(sys.argv) != 9:
-        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER>")
+        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER> <SECRETS_FILE>")
         exit()
 
     env = sys.argv[1]
@@ -20,7 +20,7 @@ def __main__():
     ldap_host = sys.argv[6]
     ldap_query = sys.argv[7]
 
-    db_user, db_pass = creds.CredentialsProvider(sys.argv[8]).get_db_creds(target_db)
+    db_user, db_pass = creds.CredentialsProvider(sys.argv[8], sys.argv[9]).get_db_creds(target_db)
 
     metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass, target_db)
 
