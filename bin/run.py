@@ -7,7 +7,7 @@ import usagemetrics.creds_provider as creds
 
 
 def __main__():
-    if len(sys.argv) != 6:
+    if len(sys.argv) != 9:
         print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER>")
         exit()
 
