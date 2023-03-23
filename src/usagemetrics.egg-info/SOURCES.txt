@@ -1,0 +1,14 @@
+README.md
+setup.py
+src/usagemetrics/__init__.py
+src/usagemetrics/analysis_metrics.py
+src/usagemetrics/creds_provider.py
+src/usagemetrics/eda_user_metrics_client.py
+src/usagemetrics/metrics_writer.py
+src/usagemetrics/prometheus_metrics_client.py
+src/usagemetrics/runner.py
+src/usagemetrics.egg-info/PKG-INFO
+src/usagemetrics.egg-info/SOURCES.txt
+src/usagemetrics.egg-info/dependency_links.txt
+src/usagemetrics.egg-info/requires.txt
+src/usagemetrics.egg-info/top_level.txt
