@@ -3,28 +3,24 @@ import json
 import re
 
 import cx_Oracle
-import ldap
+import subprocess
 
-SCHEMA_NAME = "dmgaldi"
+SCHEMA_NAME = "usagemetrics"
 
 
 class MetricsWriter:
     ORACLE_DESC_FIELD_NAME = 'orclNetDescString'
-    LDAP_RESULT_PATTERN = "\\(HOST=([a-zA-Z0-9.-_]+)\\).*\\(PORT=([0-9]+)\\).*\\(SERVICE_NAME=([a-zA-Z0-9.-_]+)\\)"
 
     def __init__(self, ldap_host, ldap_query, username, password, acctdb):
         print(f"Connect with {ldap_host} {ldap_query}")
         # Query LDAP for db connect information.
-        ldap_connect = ldap.initialize(f'ldap://{ldap_host}')
-        ldap_search = ldap_connect.search(base=ldap_query,
-                                          scope=ldap.SCOPE_SUBTREE,
-                                          filterstr=f"(&(cn={acctdb})(objectClass=orclNetService))")
-        result_status, result_data = ldap_connect.result(ldap_search, 0)
-        ldap_result = str(result_data[0][1][self.ORACLE_DESC_FIELD_NAME][0])
-        match = re.search(self.LDAP_RESULT_PATTERN, ldap_result)
+        args = ['ldapsearch', '-x', '-H', f"ldaps://{ldap_host}", '-b', ldap_query, '-s', 'sub', f"(&(cn={acctdb})(objectClass=orclNetService))", 'orclNetDescString']
+        output = subprocess.check_output(args).decode('utf-8').replace("\n", '').replace(" ", "")
+        match = re.search("HOST=([A-Za-z0-9.]+).*PORT=([0-9]+).*SERVICE_NAME=([a-zA-Z0-9.]+)", output)
         host = match.group(1)
         port = match.group(2)
         service = match.group(3)
+
         # Construct db connect information with parsed details from LDAP.
         self.connection = cx_Oracle.connect(
             username,

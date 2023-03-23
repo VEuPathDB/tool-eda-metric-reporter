@@ -23,6 +23,7 @@ def __main__():
     db_user, db_pass = creds.CredentialsProvider().get_db_creds(target_db)
 
     metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass, target_db)
+
     runner.UsageMetricsRunner(user_metrics_url=eda_url,
                               prometheus_url=prometheus_url,
                               env=env,
