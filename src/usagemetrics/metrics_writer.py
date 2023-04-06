@@ -15,6 +15,7 @@ class MetricsWriter:
         print(f"Connect with {ldap_host} {ldap_query}")
         # Query LDAP for db connect information.
         args = ['ldapsearch', '-x', '-H', f"ldaps://{ldap_host}", '-b', ldap_query, '-s', 'sub', f"(&(cn={acctdb})(objectClass=orclNetService))", 'orclNetDescString']
+        print("Running command with args: " + args)
         output = subprocess.check_output(args).decode('utf-8').replace("\n", '').replace(" ", "")
         match = re.search("HOST=([A-Za-z0-9.]+).*PORT=([0-9]+).*SERVICE_NAME=([a-zA-Z0-9.]+)", output)
         host = match.group(1)

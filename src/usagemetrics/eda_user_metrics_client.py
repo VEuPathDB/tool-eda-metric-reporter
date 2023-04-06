@@ -67,7 +67,15 @@ class EdaUserServiceMetricsClient:
         shares_per_study = pd.DataFrame(created_or_modified_counts["importedAnalysesPerStudy"]).rename(
             columns={"studyId": "study_id", "count": "shares_count"})
 
-        study_stats = analyses_per_study.merge(right=shares_per_study, on="study_id", how="outer")
+        # The merge will only work if shares and analyses are not completely empty dfs.
+        if analyses_per_study.empty:
+            shares_per_study['analysis_count'] = 0
+            study_stats = shares_per_study
+        elif shares_per_study.empty:
+            analyses_per_study['shares_count'] = 0
+            study_stats = analyses_per_study
+        else:
+            study_stats = analyses_per_study.merge(right=shares_per_study, on="study_id", how="outer")
 
         # Parse different parts of service response into dataframes
         registered_users_histo = self.extract_object_frequencies(response_body, 'registeredUsersAnalysesCounts',
