@@ -56,7 +56,7 @@ class UsageMetricsRunner:
         print("Raw file download metrics: " + file_download_metrics.to_string())
 
         # Filter out zeroes before counting users per study
-        print("Users to ignore: " + users_to_ignore)
+        print("Users to ignore: " + str(users_to_ignore))
         file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
         file_download_metrics = file_download_metrics[~file_download_metrics.index.get_level_values(level=0).isin(users_to_ignore)]
 
