@@ -21,8 +21,7 @@ class AccountDbClient:
             user=username,
             password=password,
             dsn=f"{host}:{port}/{service}",
-            encoding='utf-8',
-            disable_oob=True)
+            encoding='utf-8')
 
     def query_users_to_ignore(self):
         sql = '''
