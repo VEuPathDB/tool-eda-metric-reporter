@@ -14,7 +14,7 @@ AUTO_PICK_CALENDAR_MONTH = "auto"
 class UsageMetricsRunner:
     PROJECT_ID = "ClinEpiDB"
 
-    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer):
+    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer, acctdb_client):
         """
         :param user_metrics_url: URL of EDA user metrics service, e.g. http://dgaldi.clinepidb.org/eda
         :param prometheus_url: URL of prometheus endpoint, e.g. localhost:9090
@@ -27,10 +27,13 @@ class UsageMetricsRunner:
         self.env = env
         self.metrics_writer = metrics_writer
         self.prometheus_client = PrometheusClient(self.prometheus_url)
+        self.acctdb_client = acctdb_client
         if calendar_month == AUTO_PICK_CALENDAR_MONTH:
             current_date = datetime.today()
-            self.start = first_day_of_month(current_date)
-            self.end = last_day_of_month(current_date)
+            last_month_number = 12 if current_date.month == 1 else current_date.month - 1
+            last_month_datetime = datetime(year=current_date.year, day=current_date.day, month=last_month_number)
+            self.start = first_day_of_month(last_month_datetime)
+            self.end = last_day_of_month(last_month_datetime)
         else:
             calendar_month_tokens = calendar_month.split("-")
             self.start = datetime(year=int(calendar_month_tokens[0]), month=int(calendar_month_tokens[1]), day=1)
@@ -41,21 +44,17 @@ class UsageMetricsRunner:
         self.metrics_writer.create_job(run_id, self.start.month, self.start.year)
         self.handle_analysis_metrics(run_id)
         self.handle_download_metrics(run_id)
+        # Mark job complete?
 
     def handle_download_metrics(self, run_id):
         interval = (self.end - self.start).days
+        users_to_ignore = self.acctdb_client.query_users_to_ignore() if self.acctdb_client else []
         file_download_metrics = self.prometheus_client.get_metrics(
             'increase(dataset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
-
-        # Filter out zeroes before counting users per study
-        file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
-
-        # group dataframe by study and count non-zero users
-        file_download_metrics = file_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
-        file_download_metrics = file_download_metrics.transpose().reindex().rename(columns=str)
+        file_download_metrics = self.format_download_matrix(file_download_metrics, users_to_ignore)
         file_download_metrics.columns.values[0] = "file_downloads"
 
         subsetting_download_metrics = self.prometheus_client.get_metrics(
@@ -63,17 +62,31 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user_id', 'study_name'])
-
-        subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
-        subsetting_download_metrics = subsetting_download_metrics.transpose().reindex().rename(columns=str)
+        subsetting_download_metrics = self.format_download_matrix(subsetting_download_metrics, users_to_ignore)
         subsetting_download_metrics.columns.values[0] = "subset_downloads"
 
         all_download_metrics = file_download_metrics.merge(right=subsetting_download_metrics,
                                                            left_index=True,
                                                            right_index=True,
                                                            how="outer")
-
         self.metrics_writer.write_downloads_by_study(all_download_metrics, run_id)
+
+    @staticmethod
+    def format_download_matrix(df, users_to_ignore):
+        df = df[(df != 0.0) & ~df.isna()]
+
+        # Filter out users with property "ignore_metrics".
+        df = df.loc(axis=1)[~df.columns.get_level_values(0).isin(users_to_ignore)]
+
+        # Group studies by user, to find how many users downloaded each study
+        df = df.groupby(axis=1, by=lambda x: x[1]).count()
+
+        # Sum across prometheus data points, in case our prometheus query returned multiple data points.
+        df = df.sum(axis=0).to_frame()
+
+        # Ensure study name index consists of strings, not objects.
+        df = df.rename(columns=str)
+        return df
 
     def handle_analysis_metrics(self, run_id):
         user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.PROJECT_ID)
@@ -85,7 +98,8 @@ class UsageMetricsRunner:
         per_study_stats_histo = analysis_metrics.user_stats_histogram
         per_study_stats_histo['objects_bucket'] = pd.cut(per_study_stats_histo['objects_count'],
                                                          bins=[-1, 0, 1, 2, 4, 8, 16, 32, 64, sys.maxsize],
-                                                         labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64", ">64"])
+                                                         labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64",
+                                                                 ">64"])
 
         # group by new objects count bucket field to produce a histogram and write as output
         bucketed_analysis_histogram = per_study_stats_histo.groupby("objects_bucket").sum()

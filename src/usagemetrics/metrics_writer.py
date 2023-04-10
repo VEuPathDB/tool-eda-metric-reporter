@@ -21,12 +21,11 @@ class MetricsWriter:
         host = match.group(1)
         port = match.group(2)
         service = match.group(3)
-
         # Construct db connect information with parsed details from LDAP.
         self.connection = cx_Oracle.connect(
-            username,
-            password,
-            f"{host}:{port}/{service}",
+            user=username,
+            password=password,
+            dsn=f"{host}:{port}/{service}",
             encoding='utf-8')
 
     def create_job(self, report_id, start_month, start_year):
@@ -69,9 +68,14 @@ class MetricsWriter:
             VALUES(:1,:2,:3,:4)
         '''.format(SCHEMA_NAME)
         df = df.fillna(0)
+        print("Data frame to write: " + df.to_string())
         cursor = self.connection.cursor()
         for (study_name, data) in df.iterrows():
-            cursor.execute(sql, [report_id, study_name] + list(data.values))
+            try:
+                cursor.execute(sql, [report_id, study_name] + list(data.values))
+            except:
+                print("Failed while trying to write " + str(list(data.values)) + " " + str(report_id) + " " + str(study_name))
+                exit(-1)
             print([report_id, study_name, data["file_downloads"], data["subset_downloads"]])
         self.connection.commit()
 

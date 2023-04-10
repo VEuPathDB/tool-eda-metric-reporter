@@ -4,7 +4,7 @@ import sys
 import usagemetrics.runner as runner
 import usagemetrics.metrics_writer as writer
 import usagemetrics.creds_provider as creds
-
+import usagemetrics.acctdb_client as acctdb
 
 def __main__():
     if len(sys.argv) != 10:
@@ -23,12 +23,14 @@ def __main__():
     db_user, db_pass = creds.CredentialsProvider(sys.argv[8], sys.argv[9]).get_db_creds(target_db)
 
     metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass, target_db)
+    acctdb_client = acctdb.AccountDbClient(ldap_host, ldap_query, db_user, db_pass, "acctdbn")
 
     runner.UsageMetricsRunner(user_metrics_url=eda_url,
                               prometheus_url=prometheus_url,
                               env=env,
                               calendar_month=calendar_month,
-                              metrics_writer=metrics_writer).run()
+                              metrics_writer=metrics_writer,
+                              acctdb_client=acctdb_client).run()
 
 
 __main__()
