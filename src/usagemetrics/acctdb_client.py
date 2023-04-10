@@ -29,7 +29,7 @@ class AccountDbClient:
           where key = 'ignore_in_metrics' and value = 'true'
           '''
         cursor = self.connection.cursor()
-        return [row['user_id'] for row in cursor.execute(sql)]
+        return [row[0] for row in cursor.execute(sql)]
 
 
 
