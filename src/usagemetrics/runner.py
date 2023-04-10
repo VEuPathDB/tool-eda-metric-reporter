@@ -58,7 +58,7 @@ class UsageMetricsRunner:
         # Filter out zeroes before counting users per study
         print("Users to ignore: " + str(users_to_ignore))
         file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
-        print("Boolean array: " + str(file_download_metrics.index.isin(users_to_ignore, level=0).to_string()))
+        print("Boolean array: " + str(file_download_metrics.index.isin(users_to_ignore, level=0)))
         file_download_metrics = file_download_metrics[~file_download_metrics.index.isin(users_to_ignore, level=0)]
 
         # group dataframe by study and count non-zero users
