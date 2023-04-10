@@ -53,6 +53,7 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
+        print("Raw file download metrics: " + file_download_metrics.to_string())
 
         # Filter out zeroes before counting users per study
         file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
