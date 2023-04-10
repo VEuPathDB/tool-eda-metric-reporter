@@ -14,7 +14,7 @@ AUTO_PICK_CALENDAR_MONTH = "auto"
 class UsageMetricsRunner:
     PROJECT_ID = "ClinEpiDB"
 
-    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer):
+    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer, acctdb_client):
         """
         :param user_metrics_url: URL of EDA user metrics service, e.g. http://dgaldi.clinepidb.org/eda
         :param prometheus_url: URL of prometheus endpoint, e.g. localhost:9090
@@ -27,10 +27,13 @@ class UsageMetricsRunner:
         self.env = env
         self.metrics_writer = metrics_writer
         self.prometheus_client = PrometheusClient(self.prometheus_url)
+        self.acctdb_client = acctdb_client
         if calendar_month == AUTO_PICK_CALENDAR_MONTH:
             current_date = datetime.today()
-            self.start = first_day_of_month(current_date)
-            self.end = last_day_of_month(current_date)
+            last_month_number = 12 if current_date.month == 1 else current_date.month - 1
+            last_month_datetime = datetime(year=current_date.year, day=current_date.day, month=last_month_number)
+            self.start = first_day_of_month(last_month_datetime)
+            self.end = last_day_of_month(last_month_datetime)
         else:
             calendar_month_tokens = calendar_month.split("-")
             self.start = datetime(year=int(calendar_month_tokens[0]), month=int(calendar_month_tokens[1]), day=1)
@@ -44,6 +47,7 @@ class UsageMetricsRunner:
 
     def handle_download_metrics(self, run_id):
         interval = (self.end - self.start).days
+        users_to_ignore = self.acctdb_client.query_users_to_ignore() if self.acctdb_client else []
         file_download_metrics = self.prometheus_client.get_metrics(
             'increase(dataset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
             start_date=self.start,
@@ -55,6 +59,7 @@ class UsageMetricsRunner:
 
         # group dataframe by study and count non-zero users
         file_download_metrics = file_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
+        file_download_metrics = file_download_metrics[~file_download_metrics['user'].isin(users_to_ignore)]
         file_download_metrics = file_download_metrics.transpose().reindex().rename(columns=str)
         file_download_metrics.columns.values[0] = "file_downloads"
 
@@ -64,6 +69,7 @@ class UsageMetricsRunner:
             end_date=self.end,
             labels=['user_id', 'study_name'])
 
+        subsetting_download_metrics = subsetting_download_metrics[~file_download_metrics['user_id'].isin(users_to_ignore)]
         subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
         subsetting_download_metrics = subsetting_download_metrics.transpose().reindex().rename(columns=str)
         subsetting_download_metrics.columns.values[0] = "subset_downloads"

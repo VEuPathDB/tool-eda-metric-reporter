@@ -21,13 +21,13 @@ class MetricsWriter:
         host = match.group(1)
         port = match.group(2)
         service = match.group(3)
-
         # Construct db connect information with parsed details from LDAP.
         self.connection = cx_Oracle.connect(
-            username,
-            password,
-            f"{host}:{port}/{service}",
-            encoding='utf-8')
+            user=username,
+            password=password,
+            dsn=f"{host}:{port}/{service}",
+            encoding='utf-8',
+            disable_oob=True)
 
     def create_job(self, report_id, start_month, start_year):
         sql = '''INSERT INTO {0}.reports (report_id, report_month, report_year, report_time) 
