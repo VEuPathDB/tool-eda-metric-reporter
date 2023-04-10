@@ -58,7 +58,8 @@ class UsageMetricsRunner:
         # Filter out zeroes before counting users per study
         print("Users to ignore: " + str(users_to_ignore))
         file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
-        file_download_metrics = file_download_metrics[~file_download_metrics.index.get_level_values(level=0).isin(users_to_ignore)]
+        print("Boolean array: " + str(file_download_metrics.index.isin(users_to_ignore, level=0).to_string()))
+        file_download_metrics = file_download_metrics[~file_download_metrics.index.isin(users_to_ignore, level=0)]
 
         # group dataframe by study and count non-zero users
         file_download_metrics = file_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
@@ -71,7 +72,7 @@ class UsageMetricsRunner:
             end_date=self.end,
             labels=['user_id', 'study_name'])
 
-        subsetting_download_metrics = subsetting_download_metrics[~file_download_metrics.index.get_level_values(level=0).isin(users_to_ignore)]
+        subsetting_download_metrics = subsetting_download_metrics[~file_download_metrics.index.isin(users_to_ignore, level=0)]
         subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
         subsetting_download_metrics = subsetting_download_metrics.transpose().reindex().rename(columns=str)
         subsetting_download_metrics.columns.values[0] = "subset_downloads"
