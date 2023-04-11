@@ -70,7 +70,11 @@ class MetricsWriter:
         df = df.fillna(0)
         cursor = self.connection.cursor()
         for (study_name, data) in df.iterrows():
-            cursor.execute(sql, [report_id, study_name] + list(data.values))
+            try:
+                cursor.execute(sql, [report_id, study_name] + list(data.values))
+            except:
+                print("Failed while trying to write " + str(list(data.values)) + " " + str(report_id) + " " + str(study_name))
+                exit(-1)
             print([report_id, study_name, data["file_downloads"], data["subset_downloads"]])
         self.connection.commit()
 
