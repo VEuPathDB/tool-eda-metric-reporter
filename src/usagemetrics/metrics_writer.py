@@ -68,6 +68,7 @@ class MetricsWriter:
             VALUES(:1,:2,:3,:4)
         '''.format(SCHEMA_NAME)
         df = df.fillna(0)
+        print("Data frame to write: " + df.to_string())
         cursor = self.connection.cursor()
         for (study_name, data) in df.iterrows():
             try:
