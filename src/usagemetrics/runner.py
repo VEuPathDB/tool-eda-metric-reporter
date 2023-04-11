@@ -44,6 +44,7 @@ class UsageMetricsRunner:
         self.metrics_writer.create_job(run_id, self.start.month, self.start.year)
         self.handle_analysis_metrics(run_id)
         self.handle_download_metrics(run_id)
+        # Mark job complete?
 
     def handle_download_metrics(self, run_id):
         interval = (self.end - self.start).days
