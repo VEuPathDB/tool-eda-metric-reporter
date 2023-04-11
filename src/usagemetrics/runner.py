@@ -53,15 +53,10 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
-        print("Raw file download metrics: " + file_download_metrics.to_string())
-
-        # Filter out zeroes before counting users per study
-        print("Users to ignore: " + str(users_to_ignore))
         file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
-        print("Index: " + str(file_download_metrics.columns))
-        # print("Boolean array: " + str(file_download_metrics.columns.isin(users_to_ignore, level=0)))
-        file_download_metrics = file_download_metrics[:,
-                                ~file_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
+        # Filter out users with property "ignore_metrics".
+        file_download_metrics = file_download_metrics.loc(axis=1)[
+            ~file_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
 
         # group dataframe by study and count non-zero users
         file_download_metrics = file_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
@@ -73,9 +68,9 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user_id', 'study_name'])
-        # subsetting_download_metrics.loc
-        subsetting_download_metrics = subsetting_download_metrics[:,
-                                      ~file_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
+        # Filter out users with property "ignore_metrics".
+        subsetting_download_metrics = subsetting_download_metrics.loc(axis=1)[
+            ~subsetting_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
         subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
         subsetting_download_metrics = subsetting_download_metrics.transpose().reindex().rename(columns=str)
         subsetting_download_metrics.columns.values[0] = "subset_downloads"
@@ -84,7 +79,6 @@ class UsageMetricsRunner:
                                                            left_index=True,
                                                            right_index=True,
                                                            how="outer")
-
         self.metrics_writer.write_downloads_by_study(all_download_metrics, run_id)
 
     def handle_analysis_metrics(self, run_id):
