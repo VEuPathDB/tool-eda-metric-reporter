@@ -53,7 +53,7 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
-        file_download_metrics = file_download_metrics[file_download_metrics != 0.0]
+        file_download_metrics = file_download_metrics[(file_download_metrics != 0.0) & ~file_download_metrics.isna()]
         # Filter out users with property "ignore_metrics".
         file_download_metrics = file_download_metrics.loc(axis=1)[
             ~file_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
@@ -68,6 +68,8 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user_id', 'study_name'])
+        subsetting_download_metrics = subsetting_download_metrics[
+            (subsetting_download_metrics != 0.0) & ~subsetting_download_metrics.isna()]
         # Filter out users with property "ignore_metrics".
         subsetting_download_metrics = subsetting_download_metrics.loc(axis=1)[
             ~subsetting_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
