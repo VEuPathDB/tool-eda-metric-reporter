@@ -53,14 +53,7 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
-        file_download_metrics = file_download_metrics[(file_download_metrics != 0.0) & ~file_download_metrics.isna()]
-        # Filter out users with property "ignore_metrics".
-        file_download_metrics = file_download_metrics.loc(axis=1)[
-            ~file_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
-
-        # group dataframe by study and count non-zero users
-        file_download_metrics = file_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
-        file_download_metrics = file_download_metrics.transpose().reindex().rename(columns=str)
+        file_download_metrics = self.format_download_matrix(file_download_metrics, users_to_ignore)
         file_download_metrics.columns.values[0] = "file_downloads"
 
         subsetting_download_metrics = self.prometheus_client.get_metrics(
@@ -68,13 +61,7 @@ class UsageMetricsRunner:
             start_date=self.start,
             end_date=self.end,
             labels=['user_id', 'study_name'])
-        subsetting_download_metrics = subsetting_download_metrics[
-            (subsetting_download_metrics != 0.0) & ~subsetting_download_metrics.isna()]
-        # Filter out users with property "ignore_metrics".
-        subsetting_download_metrics = subsetting_download_metrics.loc(axis=1)[
-            ~subsetting_download_metrics.columns.get_level_values(0).isin(users_to_ignore)]
-        subsetting_download_metrics = subsetting_download_metrics.groupby(axis=1, by=lambda x: x[1]).count()
-        subsetting_download_metrics = subsetting_download_metrics.transpose().reindex().rename(columns=str)
+        subsetting_download_metrics = self.format_download_matrix(subsetting_download_metrics, users_to_ignore)
         subsetting_download_metrics.columns.values[0] = "subset_downloads"
 
         all_download_metrics = file_download_metrics.merge(right=subsetting_download_metrics,
@@ -82,6 +69,23 @@ class UsageMetricsRunner:
                                                            right_index=True,
                                                            how="outer")
         self.metrics_writer.write_downloads_by_study(all_download_metrics, run_id)
+
+    @staticmethod
+    def format_download_matrix(df, users_to_ignore):
+        df = df[(df != 0.0) & ~df.isna()]
+
+        # Filter out users with property "ignore_metrics".
+        df = df.loc(axis=1)[~df.columns.get_level_values(0).isin(users_to_ignore)]
+
+        # Group studies by user, to find how many users downloaded each study
+        df = df.groupby(axis=1, by=lambda x: x[1]).count()
+
+        # Sum across prometheus data points, in case our prometheus query returned multiple data points.
+        df = df.sum(axis=1)
+
+        # Transpose and re-index so that each row has a study and download count.
+        df = df.transpose().reindex().rename(columns=str)
+        return df
 
     def handle_analysis_metrics(self, run_id):
         user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.PROJECT_ID)
@@ -93,7 +97,8 @@ class UsageMetricsRunner:
         per_study_stats_histo = analysis_metrics.user_stats_histogram
         per_study_stats_histo['objects_bucket'] = pd.cut(per_study_stats_histo['objects_count'],
                                                          bins=[-1, 0, 1, 2, 4, 8, 16, 32, 64, sys.maxsize],
-                                                         labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64", ">64"])
+                                                         labels=["0", "1", "2", "<=4", "<=8", "<=16", "<=32", "<=64",
+                                                                 ">64"])
 
         # group by new objects count bucket field to produce a histogram and write as output
         bucketed_analysis_histogram = per_study_stats_histo.groupby("objects_bucket").sum()
