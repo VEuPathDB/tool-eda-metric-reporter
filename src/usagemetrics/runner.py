@@ -81,10 +81,10 @@ class UsageMetricsRunner:
         df = df.groupby(axis=1, by=lambda x: x[1]).count()
 
         # Sum across prometheus data points, in case our prometheus query returned multiple data points.
-        df = df.sum(axis=1)
+        df = df.sum(axis=0).to_frame()
 
-        # Transpose and re-index so that each row has a study and download count.
-        df = df.transpose().reindex().rename(columns=str)
+        # Ensure study name index consists of strings, not objects.
+        df = df.rename(columns=str)
         return df
 
     def handle_analysis_metrics(self, run_id):
