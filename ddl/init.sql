@@ -5,6 +5,7 @@ CREATE TABLE usagemetrics.reports (
     report_year               NUMBER NOT NULL,
     report_time               TIMESTAMP NOT NULL,
     raw_analysis_data         CLOB, -- Raw data used to render analysis tables
+    project_id                VARCHAR(20),
     PRIMARY KEY(report_id)
 );
 

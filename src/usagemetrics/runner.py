@@ -12,9 +12,8 @@ AUTO_PICK_CALENDAR_MONTH = "auto"
 
 
 class UsageMetricsRunner:
-    PROJECT_ID = "ClinEpiDB"
 
-    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer, acctdb_client):
+    def __init__(self, user_metrics_url, prometheus_url, env, calendar_month, metrics_writer, acctdb_client, project_id):
         """
         :param user_metrics_url: URL of EDA user metrics service, e.g. http://dgaldi.clinepidb.org/eda
         :param prometheus_url: URL of prometheus endpoint, e.g. localhost:9090
@@ -28,6 +27,7 @@ class UsageMetricsRunner:
         self.metrics_writer = metrics_writer
         self.prometheus_client = PrometheusClient(self.prometheus_url)
         self.acctdb_client = acctdb_client
+        self.project_id = project_id
         if calendar_month == AUTO_PICK_CALENDAR_MONTH:
             current_date = datetime.today()
             last_month_number = 12 if current_date.month == 1 else current_date.month - 1
@@ -41,7 +41,7 @@ class UsageMetricsRunner:
 
     def run(self):
         run_id = str(uuid.uuid4())
-        self.metrics_writer.create_job(run_id, self.start.month, self.start.year)
+        self.metrics_writer.create_job(run_id, self.start.month, self.start.year, self.project_id)
         self.handle_analysis_metrics(run_id)
         self.handle_download_metrics(run_id)
         # Mark job complete?
@@ -89,7 +89,7 @@ class UsageMetricsRunner:
         return df
 
     def handle_analysis_metrics(self, run_id):
-        user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.PROJECT_ID)
+        user_metrics_client = EdaUserServiceMetricsClient(self.user_metrics_url, self.project_id)
 
         # (analysis_count_bucket, registered_user_count, guest_user_count, registered_user_filters, guest_user_filters)
         analysis_metrics: AnalysisMetrics = user_metrics_client.query_analysis_metrics(self.start, self.end)

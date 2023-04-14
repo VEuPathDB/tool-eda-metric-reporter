@@ -8,7 +8,7 @@ import usagemetrics.acctdb_client as acctdb
 
 def __main__():
     if len(sys.argv) != 10:
-        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER> <SECRETS_FILE>")
+        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER> <SECRETS_FILE> <PROJECT_ID>")
         exit()
 
     env = sys.argv[1]
@@ -21,6 +21,7 @@ def __main__():
     ldap_query = sys.argv[7]
 
     db_user, db_pass = creds.CredentialsProvider(sys.argv[8], sys.argv[9]).get_db_creds(target_db)
+    project_id = sys.argv[10]
 
     metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass, target_db)
     acctdb_client = acctdb.AccountDbClient(ldap_host, ldap_query, db_user, db_pass, "acctdbn")
@@ -30,7 +31,8 @@ def __main__():
                               env=env,
                               calendar_month=calendar_month,
                               metrics_writer=metrics_writer,
-                              acctdb_client=acctdb_client).run()
+                              acctdb_client=acctdb_client,
+                              project_id=project_id).run()
 
 
 __main__()

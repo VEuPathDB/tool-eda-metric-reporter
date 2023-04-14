@@ -28,11 +28,11 @@ class MetricsWriter:
             dsn=f"{host}:{port}/{service}",
             encoding='utf-8')
 
-    def create_job(self, report_id, start_month, start_year):
-        sql = '''INSERT INTO {0}.reports (report_id, report_month, report_year, report_time) 
-                    VALUES(:1,:2,:3,:4)'''.format(SCHEMA_NAME)
+    def create_job(self, report_id, start_month, start_year, project_id):
+        sql = '''INSERT INTO {0}.reports (report_id, report_month, report_year, report_time, project_id) 
+                    VALUES(:1,:2,:3,:4,:5)'''.format(SCHEMA_NAME)
         cursor = self.connection.cursor()
-        cursor.execute(sql, [report_id, start_month, start_year, datetime.datetime.now()])
+        cursor.execute(sql, [report_id, start_month, start_year, datetime.datetime.now(), project_id])
         self.connection.commit()
 
     def write_analysis_histogram(self, df, report_id):
