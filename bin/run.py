@@ -7,7 +7,7 @@ import usagemetrics.creds_provider as creds
 import usagemetrics.acctdb_client as acctdb
 
 def __main__():
-    if len(sys.argv) != 10:
+    if len(sys.argv) != 11:
         print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER> <SECRETS_FILE> <PROJECT_ID>")
         exit()
 
