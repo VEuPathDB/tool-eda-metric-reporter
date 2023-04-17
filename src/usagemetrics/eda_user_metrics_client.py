@@ -1,17 +1,31 @@
 import json
 import sys
 from http import client
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 import pandas as pd
 from usagemetrics.analysis_metrics import AnalysisMetrics
 
 
 class EdaUserServiceMetricsClient:
 
-    def __init__(self, url, project_id):
+    def __init__(self, url, project_id, qa_auth_file):
         self.url = url
         self.project_id = project_id
         self.base_url = f"/metrics/user/{self.project_id}/analyses"
+        if qa_auth_file:
+            qa_auth = json.loads(qa_auth_file)
+            self.user = qa_auth['user']
+            self.passwd = qa_auth['password']
+        else:
+            self.user = None
+            self.passwd = None
+
+    def get_auth_tkt_cookies(self):
+        endpoint = "https://veupathdb.org"
+        auth_client = client.HTTPSConnection(endpoint)
+        auth_client.request("POST", "auth/bin/login", f"username={urlencode(self.user)}&password={urlencode(self.passwd)}")
+        res = auth_client.getresponse()
+        return {key: val for key, val in res.headers.items() if "auth_tkt" in val}
 
     def query_analysis_metrics(self, start_date, end_date):
         """
@@ -24,6 +38,10 @@ class EdaUserServiceMetricsClient:
         :return:
         """
         eda_url_parse_result = urlparse(self.url)
+        if self.user:
+            cookie_headers = self.get_auth_tkt_cookies()
+        else:
+            cookie_headers = {}
         if eda_url_parse_result.scheme == 'https':
             eda_client = client.HTTPSConnection(str(eda_url_parse_result.hostname), port=eda_url_parse_result.port)
         else:
@@ -32,7 +50,7 @@ class EdaUserServiceMetricsClient:
         query_start = start_date.isoformat().split('T')[0]
         query_end = end_date.isoformat().split('T')[0]
         url = f"{str(eda_url_parse_result.path)}{self.base_url}?startDate={query_start}&endDate={query_end}"
-        eda_client.request(method="GET", url=url, body=None, headers={})
+        eda_client.request(method="GET", url=url, body=None, headers=cookie_headers)
         response = eda_client.getresponse()
         print("Received response with status " + str(response.status))
         if response.status != 200:

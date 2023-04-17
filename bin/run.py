@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -7,8 +8,8 @@ import usagemetrics.creds_provider as creds
 import usagemetrics.acctdb_client as acctdb
 
 def __main__():
-    if len(sys.argv) != 11:
-        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER> <SECRETS_FILE> <PROJECT_ID>")
+    if len(sys.argv) != 12:
+        print(f"Usage: {sys.argv[0]} <ENV> <EDA_URL> <PROMETHEUS_URL> <CALENDAR_MONTH|YYYY-MM> <TARGET_DB> <LDAP_HOST> <LDAP_QUERY> <USER> <SECRETS_FILE> <PROJECT_ID> <QA_AUTH_FILE>")
         exit()
 
     env = sys.argv[1]
@@ -23,6 +24,8 @@ def __main__():
     db_user, db_pass = creds.CredentialsProvider(sys.argv[8], sys.argv[9]).get_db_creds(target_db)
     project_id = sys.argv[10]
 
+    qa_auth_file = sys.argv[11]
+
     metrics_writer = writer.MetricsWriter(ldap_host, ldap_query, db_user, db_pass, target_db)
     acctdb_client = acctdb.AccountDbClient(ldap_host, ldap_query, db_user, db_pass, "acctdbn")
 
@@ -32,7 +35,8 @@ def __main__():
                               calendar_month=calendar_month,
                               metrics_writer=metrics_writer,
                               acctdb_client=acctdb_client,
-                              project_id=project_id).run()
+                              project_id=project_id,
+                              qa_auth_file=qa_auth_file).run()
 
 
 __main__()
