@@ -13,7 +13,7 @@ properties([
     stringParam(name: 'LDAP_QUERY', defaultValue: '', description: 'LDAP query'),
     stringParam(name: 'DB_USER', defaultValue: '', description: 'DB user'),
     stringParam(name: 'SECRETS_FILE', defaultValue: '', description: 'Secrets file'),
-    stringParam(name: 'PROJECT_ID', defaultValue: 'ClinEpiDB', description: 'Project ID for which to collect metrics')
+    stringParam(name: 'PROJECT_ID', defaultValue: 'ClinEpiDB', description: 'Project ID for which to collect metrics'),
     stringParam(name: 'QA_SECRETS_FILE', defaultValue: 'None', description: 'EDA QA secrets file')
   ])
 ])
