@@ -13,7 +13,7 @@ class EdaUserServiceMetricsClient:
         self.project_id = project_id
         self.base_url = f"/metrics/user/{self.project_id}/analyses"
         if qa_auth_file:
-            qa_auth = json.loads(qa_auth_file)
+            qa_auth = json.load(open(qa_auth_file, 'r'))
             self.user = qa_auth['user']
             self.passwd = qa_auth['password']
         else:
@@ -21,8 +21,8 @@ class EdaUserServiceMetricsClient:
             self.passwd = None
 
     def get_auth_tkt_cookies(self):
-        endpoint = "https://veupathdb.org"
-        auth_client = client.HTTPSConnection(endpoint)
+        parsed_veupath_ep = urlparse( "https://veupathdb.org")
+        auth_client = client.HTTPSConnection(str(parsed_veupath_ep.hostname), port=parsed_veupath_ep.port)
         auth_client.request("POST", "auth/bin/login", f"username={urlencode(self.user)}&password={urlencode(self.passwd)}")
         res = auth_client.getresponse()
         return {key: val for key, val in res.headers.items() if "auth_tkt" in val}
