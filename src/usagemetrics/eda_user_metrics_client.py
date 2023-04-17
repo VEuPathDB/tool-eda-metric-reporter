@@ -23,7 +23,7 @@ class EdaUserServiceMetricsClient:
     def get_auth_tkt_cookies(self):
         parsed_veupath_ep = urlparse( "https://veupathdb.org")
         auth_client = client.HTTPSConnection(str(parsed_veupath_ep.hostname), port=parsed_veupath_ep.port)
-        auth_client.request("POST", "auth/bin/login", f"username={urlencode(self.user)}&password={urlencode(self.passwd)}")
+        auth_client.request("POST", "auth/bin/login", f"username={self.user}&password={self.passwd}")
         res = auth_client.getresponse()
         return {key: val for key, val in res.headers.items() if "auth_tkt" in val}
 
