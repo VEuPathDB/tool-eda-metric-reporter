@@ -12,7 +12,7 @@ class EdaUserServiceMetricsClient:
         self.url = url
         self.project_id = project_id
         self.base_url = f"/metrics/user/{self.project_id}/analyses"
-        if qa_auth_file:
+        if qa_auth_file and qa_auth_file != "None":
             qa_auth = json.load(open(qa_auth_file, 'r'))
             self.user = qa_auth['user']
             self.passwd = qa_auth['password']

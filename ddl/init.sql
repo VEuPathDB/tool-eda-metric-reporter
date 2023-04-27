@@ -25,7 +25,7 @@ CREATE TABLE usagemetrics.analysishistogram (
 
 CREATE TABLE usagemetrics.analysismetricsperstudy (
     report_id                     VARCHAR(36) NOT NULL,
-    dataset_id                    VARCHAR(20) NOT NULL, -- Note, this is a 1-1 mapping to study_id, but this is a different format
+    dataset_id                    VARCHAR(100) NOT NULL, -- Note, this is a 1-1 mapping to study_id, but this is a different format
     analysis_count                NUMBER NOT NULL,
     shares_count                  NUMBER NOT NULL,
     PRIMARY KEY(report_id, dataset_id),
@@ -47,7 +47,7 @@ CREATE TABLE usagemetrics.aggregateuserstats (
 
 CREATE TABLE usagemetrics.downloadsperstudy (
     report_id                     VARCHAR(36) NOT NULL,
-    study_id                      VARCHAR(20) NOT NULL,
+    study_id                      VARCHAR(100) NOT NULL,
     num_users_full_download       NUMBER NOT NULL,
     num_users_subset_download     NUMBER NOT NULL,
     PRIMARY KEY(report_id, study_id),
