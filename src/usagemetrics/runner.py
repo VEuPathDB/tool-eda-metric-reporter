@@ -50,16 +50,20 @@ class UsageMetricsRunner:
     def handle_download_metrics(self, run_id):
         interval = (self.end - self.start).days
         users_to_ignore = self.acctdb_client.query_users_to_ignore() if self.acctdb_client else []
+        # Add one to account for the fact that the first emission of the metric will be a "1" which is not accounted for
+        # by prometheus: https://prometheus.io/docs/practices/instrumentation/#avoid-missing-metrics
         file_download_metrics = self.prometheus_client.get_metrics(
-            'increase(dataset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
+            '1 + increase(dataset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
             start_date=self.start,
             end_date=self.end,
             labels=['user', 'study'])
         file_download_metrics = self.format_download_matrix(file_download_metrics, users_to_ignore)
         file_download_metrics.columns.values[0] = "file_downloads"
 
+        # Add one to account for the fact that the first emission of the metric will be a "1" which is not accounted for
+        # by prometheus: https://prometheus.io/docs/practices/instrumentation/#avoid-missing-metrics
         subsetting_download_metrics = self.prometheus_client.get_metrics(
-            'increase(subset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
+            '1 + increase(subset_download_requested_total{environment="' + self.env + '"}[' + str(interval) + 'd])',
             start_date=self.start,
             end_date=self.end,
             labels=['user_id', 'study_name'])
